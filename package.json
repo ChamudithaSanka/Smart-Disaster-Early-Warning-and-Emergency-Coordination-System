@@ -1,0 +1,13 @@
+{
+  "name": "disaster-warning-system",
+  "private": true,
+  "workspaces": ["apps/api", "apps/web"],
+  "scripts": {
+    "api": "npm run dev -w apps/api",
+    "web": "npm run dev -w apps/web",
+    "mobile": "cd apps/mobile && npx expo start",
+    "db:generate": "npx prisma generate --schema=apps/api/prisma/schema.prisma",
+    "db:push": "npm run db:push -w apps/api",
+    "db:seed": "npm run db:seed -w apps/api"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "DMC Disaster Alerts",
+    "slug": "dmc-disaster-alerts",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": { "supportsTablet": true, "infoPlist": { "NSCameraUsageDescription": "Take photos of hazards", "NSLocationWhenInUseUsageDescription": "Attach your GPS location to hazard reports" } },
+    "android": { "permissions": ["CAMERA", "ACCESS_FINE_LOCATION"] },
+    "plugins": ["expo-notifications", "expo-location", "expo-image-picker"]
+  }
+}

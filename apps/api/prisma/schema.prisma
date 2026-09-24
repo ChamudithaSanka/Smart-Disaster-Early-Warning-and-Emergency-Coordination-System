@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  DMC_OFFICER
+  OPERATIONS_COORDINATOR
+  CITIZEN
+  FIELD_RESPONDER
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum WarningStatus {
+  ISSUED
+  CANCELLED
+}
+
+enum Channel {
+  PUSH
+  SMS
+  SIREN
+}
+
+enum AlertStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+enum ReportStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  NEEDS_MORE_INFO
+  VERIFIED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MED
+  HIGH
+}
+
+enum RequestStatus {
+  OPEN
+  DISPATCHED
+  CLOSED
+}
+
+enum DispatchStatus {
+  PENDING_APPROVAL
+  ACCEPTED
+  DECLINED
+  TIMED_OUT
+  EN_ROUTE
+  ON_SITE
+  RETURNING
+  COMPLETED
+  CANCELLED
+}
+
+enum TeamStatus {
+  AVAILABLE
+  ASSIGNED
+  UNAVAILABLE
+}
+
+enum CentreStatus {
+  INACTIVE
+  ACTIVE
+  FULL
+  CLOSED
+}
+
+model Area {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  district String
+  lat      Float
+  lng      Float
+  radiusKm Float     @default(12)
+  users    User[]
+  warnings Warning[]
+}
+
+model Organization {
+  id     String        @id @default(cuid())
+  name   String
+  type   String
+  users  User[]
+  teams  RescueTeam[]
+  stock  ReliefStock[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  isVolunteer  Boolean  @default(false)
+  phone        String?
+  nationalId   String?
+  language     String   @default("EN")
+  pushToken    String?
+  areaId       String?
+  area         Area?    @relation(fields: [areaId], references: [id])
+  orgId        String?
+  org          Organization? @relation(fields: [orgId], references: [id])
+  teamId       String?
+  team         RescueTeam?   @relation(fields: [teamId], references: [id])
+  centreId     String?
+  centre       SafetyCentre? @relation(fields: [centreId], references: [id])
+  warnings     Warning[]
+  alerts       Alert[]
+  reports      GroundReport[] @relation("ReportReporter")
+  reviewed     GroundReport[] @relation("ReportReviewer")
+}
+
+model HazardEvent {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  active    Boolean  @default(true)
+  startedAt DateTime @default(now())
+  warnings  Warning[]
+  reports   GroundReport[]
+}
+
+model Warning {
+  id          String        @id @default(cuid())
+  code        String        @unique
+  type        String
+  severity    Severity
+  title       String
+  description String
+  channels    Channel[]
+  status      WarningStatus @default(ISSUED)
+  issuedAt    DateTime      @default(now())
+  validUntil  DateTime
+  issuedById  String
+  issuedBy    User          @relation(fields: [issuedById], references: [id])
+  eventId     String?
+  event       HazardEvent?  @relation(fields: [eventId], references: [id])
+  areas       Area[]
+  alerts      Alert[]
+  escalations Escalation[]
+}
+
+model Escalation {
+  id           String   @id @default(cuid())
+  warningId    String
+  warning      Warning  @relation(fields: [warningId], references: [id])
+  fromSeverity Severity
+  toSeverity   Severity
+  reason       String
+  reportId     String?
+  byId         String
+  at           DateTime @default(now())
+}
+
+model Alert {
+  id            String      @id @default(cuid())
+  warningId     String
+  warning       Warning     @relation(fields: [warningId], references: [id])
+  citizenId     String?
+  citizen       User?       @relation(fields: [citizenId], references: [id])
+  areaId        String?
+  channel       Channel
+  status        AlertStatus
+  failureReason String?
+  createdAt     DateTime    @default(now())
+  @@index([warningId])
+  @@index([citizenId])
+}
+
+model GroundReport {
+  id              String       @id @default(cuid())
+  ref             String       @unique
+  clientId        String       @unique
+  category        String
+  description     String
+  photo           String?      @db.Text
+  lat             Float?
+  lng             Float?
+  locationText    String?
+  gnDivision      String?
+  capturedAt      DateTime
+  receivedAt      DateTime     @default(now())
+  status          ReportStatus @default(SUBMITTED)
+  priority        Boolean      @default(false)
+  reporterId      String
+  reporter        User         @relation("ReportReporter", fields: [reporterId], references: [id])
+  reviewerId      String?
+  reviewer        User?        @relation("ReportReviewer", fields: [reviewerId], references: [id])
+  reviewStartedAt DateTime?
+  officerQuestion String?
+  extraInfo       String?
+  extraPhoto      String?      @db.Text
+  decisionNote    String?
+  decidedAt       DateTime?
+  eventId         String?
+  event           HazardEvent? @relation(fields: [eventId], references: [id])
+  areaId          String?
+}
+
+model RescueRequest {
+  id        Int           @id @default(autoincrement())
+  priority  Priority
+  type      String
+  location  String
+  lat       Float
+  lng       Float
+  details   String
+  author    String
+  contact   String
+  status    RequestStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  dispatches Dispatch[]
+}
+
+model RescueTeam {
+  id           String       @id @default(cuid())
+  name         String
+  orgId        String
+  org          Organization @relation(fields: [orgId], references: [id])
+  status       TeamStatus   @default(AVAILABLE)
+  lat          Float
+  lng          Float
+  capabilities String[]
+  leaders      User[]
+  dispatches   Dispatch[]
+}
+
+model Dispatch {
+  id          String         @id @default(cuid())
+  requestId   Int
+  request     RescueRequest  @relation(fields: [requestId], references: [id])
+  teamId      String
+  team        RescueTeam     @relation(fields: [teamId], references: [id])
+  status      DispatchStatus @default(PENDING_APPROVAL)
+  eta         String?
+  requestedAt DateTime       @default(now())
+  respondedAt DateTime?
+  completedAt DateTime?
+  createdById String
+  logs        DispatchLog[]
+}
+
+model DispatchLog {
+  id         String   @id @default(cuid())
+  dispatchId String
+  dispatch   Dispatch @relation(fields: [dispatchId], references: [id])
+  status     String
+  clientId   String?  @unique
+  capturedAt DateTime
+  createdAt  DateTime @default(now())
+}
+
+model SafetyCentre {
+  id        String       @id @default(cuid())
+  name      String
+  address   String
+  lat       Float
+  lng       Float
+  capacity  Int
+  occupancy Int          @default(0)
+  families  Int          @default(0)
+  status    CentreStatus @default(INACTIVE)
+  updatedAt DateTime     @default(now())
+  users     User[]
+  updates   OccupancyUpdate[]
+}
+
+model OccupancyUpdate {
+  id         String       @id @default(cuid())
+  clientId   String       @unique
+  centreId   String
+  centre     SafetyCentre @relation(fields: [centreId], references: [id])
+  operatorId String
+  headcount  Int
+  families   Int          @default(0)
+  capturedAt DateTime
+  applied    Boolean
+  note       String?
+  createdAt  DateTime     @default(now())
+}
+
+model ReliefStock {
+  id       String       @id @default(cuid())
+  orgId    String
+  org      Organization @relation(fields: [orgId], references: [id])
+  item     String
+  unit     String
+  quantity Int
+}
+
+model ReliefDistribution {
+  id           String   @id @default(cuid())
+  orgId        String
+  item         String
+  unit         String
+  quantity     Int
+  centreId     String?
+  areaId       String?
+  recordedById String
+  at           DateTime @default(now())
+}

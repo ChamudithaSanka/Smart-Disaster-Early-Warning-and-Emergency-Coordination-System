@@ -3,7 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "dev": "vite", "build": "tsc --noEmit && vite build", "preview": "vite preview" },
+  "scripts": {
+    "dev": "node init && vite",
+    "build": "node init && tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "leaflet": "^1.9.4",
     "lucide-react": "^0.383.0",

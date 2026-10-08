@@ -1,0 +1,14 @@
+@import 'leaflet/dist/leaflet.css';
+@tailwind base; @tailwind components; @tailwind utilities;
+body { @apply bg-page text-ink font-sans antialiased; }
+@layer components {
+  .card { @apply bg-white rounded-xl shadow-card p-5; }
+  .card-title { @apply text-[11px] font-bold uppercase tracking-[.08em] text-slate-600 mb-3; }
+  .inp { @apply w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal; }
+  .lbl { @apply block text-[13px] font-semibold text-slate-800 mb-1.5; }
+  .btn { @apply rounded-lg px-4 py-2.5 text-sm font-semibold border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-60; }
+  .btn-teal { @apply rounded-lg px-4 py-2.5 text-sm font-semibold bg-teal text-white hover:bg-[#095d6d] disabled:opacity-60; }
+  .btn-navy { @apply rounded-lg px-4 py-2.5 text-sm font-semibold bg-navy2 text-white hover:bg-navy disabled:opacity-60; }
+  .th { @apply text-left text-[11px] font-bold uppercase tracking-wider text-slate-500 py-2; }
+  .leaflet-container { font-family: inherit; }
+}
